@@ -1,31 +1,55 @@
-const canvas = document.getElementById("puzzleCanvas");
-const ctx = canvas.getContext("2d");
+const express = require('express');
+const sharp = require('sharp');
+const fs = require('fs');
+const path = require('path');
 
-let tiles = [];
-let dragged = null;
-let offsetX, offsetY;
-let TILE_W, TILE_H;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-async function loadPuzzle() {
-  const res = await fetch("/api/tiles");
-  const data = await res.json();
+const IMAGE_PATH = path.join(__dirname, 'image', 'secret.png');
+const ROWS = 5;
+const COLS = 5;
 
-  const rows = data.rows, cols = data.cols;
-  tiles = data.tiles;
+app.use(express.static('public'));
 
-  TILE_W = canvas.width / cols;
-  TILE_H = canvas.height / rows;
+app.get('/api/tiles', async (req, res) => {
+  try {
+    const imgBuffer = fs.readFileSync(IMAGE_PATH);
+    const metadata = await sharp(imgBuffer).metadata();
 
-  for (let i = 0; i < tiles.length; i++) {
-    tiles[i].x = Math.random() * (canvas.width - TILE_W);
-    tiles[i].y = Math.random() * (canvas.height - TILE_H);
-    const img = new Image();
-    img.src = tiles[i].img;
-    tiles[i].image = img;
+    const tileWidth = Math.floor(metadata.width / COLS);
+    const tileHeight = Math.floor(metadata.height / ROWS);
+
+    const tiles = [];
+
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        const tileBuffer = await sharp(imgBuffer)
+          .extract({ left: col * tileWidth, top: row * tileHeight, width: tileWidth, height: tileHeight })
+          .toBuffer();
+
+        const base64 = tileBuffer.toString('base64');
+        tiles.push({
+          row,
+          col,
+          img: `data:image/png;base64,${base64}`
+        });
+      }
+    }
+
+    // Shuffle tiles
+    for (let i = tiles.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+    }
+
+    res.json({ tiles, rows: ROWS, cols: COLS });
+  } catch (err) {
+    console.error('Tile generation failed:', err);
+    res.status(500).send('Server error');
   }
+});
 
-  draw();
-}
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
