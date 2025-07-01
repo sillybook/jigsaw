@@ -1,48 +1,31 @@
-const express = require('express');
-const sharp = require('sharp');
-const fs = require('fs');
-const path = require('path');
+const canvas = document.getElementById("puzzleCanvas");
+const ctx = canvas.getContext("2d");
 
-const app = express();
-const PORT = 3000;
+let tiles = [];
+let dragged = null;
+let offsetX, offsetY;
+let TILE_W, TILE_H;
 
-const IMAGE_PATH = path.join(__dirname, 'image', 'i dont know.png');
-const ROWS = 5, COLS = 5;
+async function loadPuzzle() {
+  const res = await fetch("/api/tiles");
+  const data = await res.json();
 
-app.use(express.static('public'));
+  const rows = data.rows, cols = data.cols;
+  tiles = data.tiles;
 
-// API to get a scrambled tile list
-app.get('/api/tiles', async (req, res) => {
-  const imgBuffer = fs.readFileSync(IMAGE_PATH);
-  const metadata = await sharp(imgBuffer).metadata();
+  TILE_W = canvas.width / cols;
+  TILE_H = canvas.height / rows;
 
-  const tileWidth = Math.floor(metadata.width / COLS);
-  const tileHeight = Math.floor(metadata.height / ROWS);
-
-  const tiles = [];
-
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      const tileBuffer = await sharp(imgBuffer)
-        .extract({ left: col * tileWidth, top: row * tileHeight, width: tileWidth, height: tileHeight })
-        .toBuffer();
-
-      const base64 = tileBuffer.toString('base64');
-      tiles.push({
-        row,
-        col,
-        img: `data:image/png;base64,${base64}`
-      });
-    }
+  for (let i = 0; i < tiles.length; i++) {
+    tiles[i].x = Math.random() * (canvas.width - TILE_W);
+    tiles[i].y = Math.random() * (canvas.height - TILE_H);
+    const img = new Image();
+    img.src = tiles[i].img;
+    tiles[i].image = img;
   }
 
-  // Scramble the tile order
-  for (let i = tiles.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
-  }
+  draw();
+}
 
-  res.json({ tiles, rows: ROWS, cols: COLS });
-});
-
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+function draw() {
+  ctx.clearRect(0, 0, canvas.width
