@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Secure Jigsaw Puzzle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background: #f8f8f8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: sans-serif;
+    }
+    canvas {
+      border: 2px solid #000;
+      max-width: 95vw;
+      margin-top: 10px;
+    }
+    button {
+      margin: 10px;
+      padding: 8px 16px;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>Secure Puzzle</h2>
+  <canvas id="puzzleCanvas" width="500" height="500"></canvas>
+  <button onclick="loadPuzzle()">Shuffle</button>
+  <script src="puzzle.js"></script>
+</body>
+</html>
