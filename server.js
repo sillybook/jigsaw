@@ -6,7 +6,7 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
-const IMAGE_PATH = path.join(__dirname, 'image', 'secret.png');
+const IMAGE_PATH = path.join(__dirname, 'image', 'i dont know.png');
 const ROWS = 5, COLS = 5;
 
 app.use(express.static('public'));
